@@ -6,7 +6,7 @@ app = Flask(__name__)
 def home():
     return render_template("home.html")
 
-#hello this is pankaj
+#hello this is navya
     
 @app.route('/register',methods=['POST','GET'])
 def register():
