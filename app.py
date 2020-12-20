@@ -5,8 +5,6 @@ app = Flask(__name__)
 @app.route('/')
 def home():
     return render_template("home.html")
-
-#hello this is navya
     
 @app.route('/register',methods=['POST','GET'])
 def register():
@@ -28,5 +26,5 @@ def login():
         return usn
     return render_template('login.html')
 
-#if __name__ == "__main__":
+if __name__ == "__main__":
     app.run(debug=True)
