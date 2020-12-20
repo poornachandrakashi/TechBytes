@@ -4,6 +4,9 @@ from functools import wraps
 from passlib.hash import sha256_crypt
 import os
 
+from wtforms import Form,StringField,TextAreaField,PasswordField,validators
+
+
 app = Flask(__name__)
 
 
@@ -87,9 +90,11 @@ def login():
                     
     return render_template('login.html')
 
-@app.route('/lostFetch')
-def lostFetch():
-    return "Hello!!! this is Lost and found fetching"
+
+
+# @app.route('/lostFetch')
+# def lostFetch():
+#     return "Hello!!! this is Lost and found fetching"
 
 @app.route('/lostinsert',methods = ['POST','GET'])
 def lostinsert():
@@ -155,6 +160,127 @@ def classifiedfetch():
 #College Updates
 #Student details
 
+
+#Article validation
+class ArticleForm(Form):
+    title = StringField('title', [validators.Length(min=1, max=2000)])
+    body = TextAreaField('body', render_kw={'rows':20})
+    
+#Adding articles    
+@app.route('/add_article',methods=['POST','GET'])
+def add_article():
+    form=ArticleForm(request.form)
+    if request.method=='POST' and form.validate():
+        title = form.title.data
+        body = form.body.data
+        image = request.files['img']
+        # ts = time.gmtime()
+        name=session['usn']
+        # uploadtime = time.strftime("%Y%m%d%H%M%S", ts)
+        filename = "image" + title + ".jpg"
+        filename = os.path.join('static/images/articles/',filename)
+    # app.logger.info("File to upload: ")
+    # app.logger.info(filename)
+        image.save(filename)
+        
+        #Create cursor
+        cur=mydb.cursor()
+        
+        #Execute
+        cur.execute("INSERT INTO articles(title,body,author) VALUES(%s,%s,%s)",(title,body,session["usn"]))
+        #commit
+        mydb.commit()
+        
+        #close connection
+        cur.close()
+        
+        flash('Article Created','Success')
+        
+        return "Article added!!!"
+    return render_template('add_article.html',form=form)
+
+#Editing articles    
+@app.route('/edit_article/<string:id>',methods=['POST','GET'])
+def edit_article(id):
+    
+    #Create Cursor
+    cur=mydb.cursor()
+    
+    #Get article by id
+    result=cur.execute("SELECT * FROM articles WHERE id = %s", [id])
+    
+    article = cur.fetchall()
+    
+    cur.close()
+    
+    
+    
+    form=ArticleForm(request.form)
+    
+    #Populate the article
+    form.title.data = article['title']
+    form.body.data = article['body']
+    
+    if request.method=='POST' and form.validate():
+        title=request.form['title']
+        body=request.form['body']
+        
+        #Create cursor
+        cur=mydb.cursor()
+        
+        #Execute
+        cur.execute("UPDATE articles SET title=%s, body=%s WHERE id=%s",(title, body, id))
+        #commit
+        mydb.commit()
+        
+        #close connection
+        cur.close()
+        
+        flash('Article Updated','Success')
+        
+        return "Article Edited"
+    return render_template('edit_article.html',form=form)
+
+
+#Users dashboard
+@app.route('/dashboard')
+def dashboard():
+    #Create cursor
+    
+    cur=mydb.cursor()
+    #Get Articles
+    result= cur.execute('SELECT * FROM articles WHERE author="{}"'.format(session['usn']))
+    
+    articles=cur.fetchall()
+    # if result > 0:
+    #     return render_template('dashboard.html', articles=articles)
+    # else:
+    #     msg = 'No Articles Found'
+    #     return render_template('dashboard.html', msg=msg)
+        
+    
+    return render_template('dashboard.html',articles=articles)  
+    #Close Connection
+    cur.close()  
+
+#Delete Article
+@app.route('/delete_article/<string:id>',methods=['POST'])
+@is_logged_in
+def delete_article(id):
+    #Creating cursor
+    cur = mydb.cursor()
+    
+    #Execute cursor
+    cur.execute("DELETE FROM articles WHERE id=%s",[id])
+    
+    mydb.commit()
+    
+    cur.close()
+    
+    flash('Article Deleted','success')
+    
+    return redirect('/dashboard')
+          
 
 if __name__ == "__main__":
     app.secret_key='poorna1999'
