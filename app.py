@@ -1,7 +1,11 @@
 from flask import Flask,render_template,flash,url_for,redirect,session,logging,request
 import mysql.connector
 from functools import wraps
+<<<<<<< HEAD
 #from passlib.hash import sha256_crypt
+=======
+from passlib.hash import sha256_crypt
+>>>>>>> adbc0812eb79d75fb6a243f5ed71b1132d42e923
 import os
 
 from wtforms import Form,StringField,TextAreaField,PasswordField,validators
@@ -265,6 +269,10 @@ def dashboard():
 
 #Delete Article
 @app.route('/delete_article/<string:id>',methods=['POST'])
+<<<<<<< HEAD
+=======
+@is_logged_in
+>>>>>>> adbc0812eb79d75fb6a243f5ed71b1132d42e923
 def delete_article(id):
     #Creating cursor
     cur = mydb.cursor()
