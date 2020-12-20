@@ -66,7 +66,7 @@ def login():
         if result == None:
             #Getting the stored hashed
             data=cur.fetchone()
-            password=data[4]
+            password=data[3]
             #Comparing the password
             if password_candidate==password:
                 session['logged_in']=True
@@ -265,7 +265,6 @@ def dashboard():
 
 #Delete Article
 @app.route('/delete_article/<string:id>',methods=['POST'])
-@is_logged_in
 def delete_article(id):
     #Creating cursor
     cur = mydb.cursor()
