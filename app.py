@@ -97,6 +97,10 @@ def lostinsert():
         name=request.form.get('itemN')
         wheres=request.form.get('itemL')
         description=request.form.get('des')
+        filename = name + ".jpg"
+        filename = os.path.join('static/images/lostfound/',filename)
+        image.save(filename)
+        
         
         # Creating Cursor
         cur=mydb.cursor()
