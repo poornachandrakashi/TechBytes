@@ -90,9 +90,28 @@ def login():
 def lostFetch():
     return "Hello!!! this is Lost and found fetching"
 
-@app.route('/lostinsert')
+@app.route('/lostinsert',methods = ['POST','GET'])
 def lostinsert():
-    return "Hello!!! this is lost insert"
+    if request.method == 'POST':
+        image = request.files['img']
+        name=request.form.get('itemN')
+        wheres=request.form.get('itemL')
+        description=request.form.get('des')
+        
+        # Creating Cursor
+        cur=mydb.cursor()
+        
+        
+        cur.execute("INSERT INTO lostfound(name,wheres,description) VALUES(%s,%s,%s)",(name,wheres,description))
+        
+        #Commit to db
+        mydb.commit()
+        
+        #close Connection
+        cur.close()
+        
+        return "Successfully added into the database"
+    return render_template("lostFoundAdd.html")
 
 @app.route('/home')
 def homepage():
