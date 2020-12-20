@@ -2,6 +2,7 @@ from flask import Flask,render_template,flash,url_for,redirect,session,logging,r
 import mysql.connector
 from functools import wraps
 from passlib.hash import sha256_crypt
+import os
 
 app = Flask(__name__)
 
@@ -117,13 +118,33 @@ def lostinsert():
         return "Successfully added into the database"
     return render_template("lostFoundAdd.html")
 
-@app.route('/home')
-def homepage():
-    return "This is homepage"
 
-@app.route('/classifiedadd')
+@app.route('/classifiedadd',methods=['POST','GET'])
 def classifiedadd():
-    return "Classified Add"
+    if request.method == 'POST':
+        image = request.files['img']
+        name=request.form.get('itemN')
+        wheres=request.form.get('itemL')
+        description=request.form.get('des')
+        filename = name + ".jpg"
+        filename = os.path.join('static/images/lostfound/',filename)
+        image.save(filename)
+        
+        
+        # Creating Cursor
+        cur=mydb.cursor()
+        
+        
+        cur.execute("INSERT INTO classified(name,wheres,description) VALUES(%s,%s,%s)",(name,wheres,description))
+        
+        #Commit to db
+        mydb.commit()
+        
+        #close Connection
+        cur.close()
+        
+        return "Successfully added into the database"
+    return render_template("classifiedadd.html")
 
 @app.route('/classifiedFetch')
 def classifiedfetch():
