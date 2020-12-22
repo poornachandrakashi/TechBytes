@@ -1,7 +1,7 @@
 from flask import Flask,render_template,flash,url_for,redirect,session,logging,request
 import mysql.connector
 from functools import wraps
-from passlib.hash import sha256_crypt
+#from passlib.hash import sha256_crypt
 import os
 
 from wtforms import Form,StringField,TextAreaField,PasswordField,validators
@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 
 #Config Mysql
-mydb=mysql.connector.connect(host='localhost',user="root",passwd="",database="techbytes")
+mydb=mysql.connector.connect(host='localhost',user="root",passwd="navya",database="techbytes")
 
 
 @app.route('/')
