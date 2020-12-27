@@ -279,6 +279,45 @@ def delete_article(id):
     flash('Article Deleted','success')
     
     return redirect('/dashboard')
+
+    # Leave_Application Form Class
+class Leave_Application(Form):
+    id = StringField('Id', [validators.Length(min=10, max=15)])
+    usn = StringField('USN', [validators.Length(min=10, max=25)])
+    year = StringField('Year', [validators.Length(min=4, max=5)])
+    leavedate = StringField('Leave_Date', [validators.Length(min=2, max=5)])
+    reason = TextAreaField('Reason', [validators.Length(min=1, max=150)])
+
+    # Leave Application
+    @app.route('/leave_application',methods=['GET','POST'])
+    def leave_application():
+        form = ArticleForm(request.form)
+        if request.method == 'POST' and form.validation():
+            id = form.id.data
+            usn = form.usn.data 
+            year = form.year.data 
+            leavedate = form.leavedate.data 
+            reason = form.reason.data 
+
+            #Create Cursor
+            cur = mysql.connection.cursor()
+
+            #Execute
+            cur.execute("INSERT INTO leave_application(id,usn,year,leavedate,reason)VALUES(%s,%s,%s,%s,%s)",(id,usn,year,leavedate,reason))
+
+            #commit to DB
+            mysql.connection.commit()
+
+            #Close connection
+            cur.close()
+
+            flash('Leave Application Created','success')
+
+            return redirect(url_for('dashboard'))
+
+        return render_template('leave_application.html' , form=form)   
+
+        
           
 
 if __name__ == "__main__":
