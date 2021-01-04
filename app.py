@@ -16,9 +16,19 @@ mydb=mysql.connector.connect(host='localhost',user="root",passwd="",database="te
 
 @app.route('/')
 def home():
-    return render_template("home.html")
+    return render_template("main.html")
 
 #hello this is navya
+# Check if user logged in
+def is_logged_in(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        if 'logged_in' in session:
+            return f(*args, **kwargs)
+        else:
+            flash('Unauthorized, Please login', 'danger')
+            return redirect(url_for('login'))
+    return wrap
     
 @app.route('/register',methods=['POST','GET'])
 def register():
@@ -49,20 +59,21 @@ def register():
         
     return render_template('register.html')
 
-@app.route('/login',methods=['POST','GET'])
+#Login page
+@app.route('/login',methods=['GET','POST'])
 def login():
-    if request.method == 'POST':
-        usn =  request.form.get('usn')
-        password_candidate = request.form.get('pass')
-        
+    if request.method=='POST':
+        #Geeting the form field
+        usn=request.form.get('usn')
+        password_candidate=request.form.get('pass')
         
         #Create Cursor
         cur=mydb.cursor(buffered=True)
-        
+
         #Get user by username
         
         result=cur.execute("select * from auth where usn = %s",[usn])
-
+        
         if result == None:
             #Getting the stored hashed
             data=cur.fetchone()
@@ -72,24 +83,36 @@ def login():
                 session['logged_in']=True
                 session['usn']=usn
                 flash("Congrats you are logged in")
-                return "Password Matched"
+                return redirect('/')
                 app.logger.info('Password Matched')
+                # return "success"
                 
             else:
                 app.logger.info("Password not matched")
                 error="Invalid login"
                 flash("password not matched")
-                return "Password Not Matched"
+                return render_template('login.html',error=error)
+                
             #Close connection
             cur.close()
         else:
             app.logger.info("No User")
             flash("No user found")
-            return "hello"
-
-                    
+            # return render_template('login.html',error=error)
+            return "it didnt check password"
     return render_template('login.html')
 
+
+#Fetch Profile on one screen
+@app.route('/classifiedfetch')
+# @is_logged_in
+def fetch_profile():
+    cur=mydb.cursor()
+    cur.execute('SELECT * FROM classified')
+    profiles=cur.fetchall()
+    
+    return render_template('classifiedfetch.html',profiles=profiles)  
+    cur.close()
 
 
 # @app.route('/lostFetch')
@@ -123,16 +146,24 @@ def lostinsert():
         return "Successfully added into the database"
     return render_template("lostFoundAdd.html")
 
+#lost and found fetchging
+@app.route('/lostfoundfetch')
+def lostfoundfetch():
+    cur=mydb.cursor()
+    cur.execute('SELECT * FROM lostfound')
+    profiles=cur.fetchall()
+    return render_template('lostFoundFetch.html',profile=profiles)
 
 @app.route('/classifiedadd',methods=['POST','GET'])
 def classifiedadd():
     if request.method == 'POST':
         image = request.files['img']
-        name=request.form.get('itemN')
-        wheres=request.form.get('itemL')
+        user=session['usn']
+        title=request.form.get('itemN')
+        category=request.form.get('itemL')
         description=request.form.get('des')
-        filename = name + ".jpg"
-        filename = os.path.join('static/images/lostfound/',filename)
+        filename = user + ".jpg"
+        filename = os.path.join('static/images/classified/',filename)
         image.save(filename)
         
         
@@ -140,7 +171,7 @@ def classifiedadd():
         cur=mydb.cursor()
         
         
-        cur.execute("INSERT INTO classified(name,wheres,description) VALUES(%s,%s,%s)",(name,wheres,description))
+        cur.execute("INSERT INTO classified(user,title,category,description) VALUES(%s,%s,%s,%s)",(user,title,category,description))
         
         #Commit to db
         mydb.commit()
@@ -153,7 +184,10 @@ def classifiedadd():
 
 @app.route('/classifiedFetch')
 def classifiedfetch():
-    return "classified Fetch"
+    cur=mydb.cursor()
+    cur.execute('SELECT * FROM classified')
+    profiles=cur.fetchall()
+    return render_template('classifiedfetch.html',profile=profiles)
 
 #Articles
 #study materials
@@ -196,8 +230,29 @@ def add_article():
         
         flash('Article Created','Success')
         
-        return "Article added!!!"
+        return redirect('/dashboard')
     return render_template('add_article.html',form=form)
+
+#Articles fetch page    
+@app.route('/articles')
+# @is_logged_in
+def articles():
+    cur=mydb.cursor()
+    #Get Articles
+    result= cur.execute('SELECT * FROM articles')
+    
+    articles=cur.fetchall()
+    # if result > 0:
+    #     return render_template('dashboard.html', articles=articles)
+    # else:
+    #     msg = 'No Articles Found'
+    #     return render_template('dashboard.html', msg=msg)
+        
+    
+    return render_template('articles.html',articles=articles)  
+    #Close Connection
+    cur.close()  
+
 
 #Editing articles    
 @app.route('/edit_article/<string:id>',methods=['POST','GET'])
@@ -218,8 +273,8 @@ def edit_article(id):
     form=ArticleForm(request.form)
     
     #Populate the article
-    form.title.data = article['title']
-    form.body.data = article['body']
+    form.title.data = article[1]
+    form.body.data = article[2]
     
     if request.method=='POST' and form.validate():
         title=request.form['title']
@@ -240,6 +295,22 @@ def edit_article(id):
         
         return "Article Edited"
     return render_template('edit_article.html',form=form)
+
+#Fetching particular article
+@app.route('/article/<string:id>')
+# @is_logged_in
+def article(id):
+    cur = mydb.cursor()
+    
+    # Get article
+    
+    result = cur.execute("SELECT * FROM articles WHERE id = %s", [id])
+
+    article = cur.fetchall()
+
+    return render_template('article.html', article=article)
+    cur.close()
+
 
 
 #Users dashboard
@@ -279,6 +350,14 @@ def delete_article(id):
     flash('Article Deleted','success')
     
     return redirect('/dashboard')
+
+#Logout
+@app.route('/logout')
+@is_logged_in
+def logout():
+    session.clear()
+    flash("Successfully Logged out!!!")
+    return redirect('/login')
           
 
 if __name__ == "__main__":
