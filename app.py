@@ -1,9 +1,7 @@
 from flask import Flask,render_template,flash,url_for,redirect,session,logging,request
 import mysql.connector
 from functools import wraps
-from passlib.hash import sha256_crypt
 import os
-
 from wtforms import Form,StringField,TextAreaField,PasswordField,validators
 
 
@@ -17,6 +15,27 @@ mydb=mysql.connector.connect(host='localhost',user="root",passwd="",database="te
 @app.route('/')
 def home():
     return render_template("main.html")
+
+@app.route('/add_study',methods=['POST','GET'])
+def addstudy():
+    if request.method == 'POST':
+        cont = request.form.get('usn')
+        sub = request.form.get('pass')
+        link = request.form.get('password')
+    # Creating Cursor
+        cur=mydb.cursor()
+        
+        
+        cur.execute("INSERT INTO study(contributors,subject,link) VALUES(%s,%s,%s)",(cont,sub,link))
+        
+        #Commit to db
+        mydb.commit()
+        
+        #close Connection
+        cur.close()
+        return render_template('main.html')    
+        
+    return render_template('add_study.html')
 
 #hello this is navya
 # Check if user logged in
@@ -105,7 +124,7 @@ def login():
 
 #Fetch Profile on one screen
 @app.route('/classifiedfetch')
-# @is_logged_in
+@is_logged_in
 def fetch_profile():
     cur=mydb.cursor()
     cur.execute('SELECT * FROM classified')
@@ -120,6 +139,7 @@ def fetch_profile():
 #     return "Hello!!! this is Lost and found fetching"
 
 @app.route('/lostinsert',methods = ['POST','GET'])
+@is_logged_in
 def lostinsert():
     if request.method == 'POST':
         image = request.files['img']
@@ -148,13 +168,24 @@ def lostinsert():
 
 #lost and found fetchging
 @app.route('/lostfoundfetch')
+@is_logged_in
 def lostfoundfetch():
     cur=mydb.cursor()
     cur.execute('SELECT * FROM lostfound')
     profiles=cur.fetchall()
     return render_template('lostFoundFetch.html',profile=profiles)
 
+#Study Materials fetch
+@app.route('/studyfetch')
+@is_logged_in
+def studyfetch():
+    cur=mydb.cursor()
+    cur.execute('SELECT * FROM study')
+    profiles=cur.fetchall()
+    return render_template('fetch_study.html',profile=profiles)
+
 @app.route('/classifiedadd',methods=['POST','GET'])
+@is_logged_in
 def classifiedadd():
     if request.method == 'POST':
         image = request.files['img']
@@ -183,6 +214,7 @@ def classifiedadd():
     return render_template("classifiedadd.html")
 
 @app.route('/classifiedFetch')
+@is_logged_in
 def classifiedfetch():
     cur=mydb.cursor()
     cur.execute('SELECT * FROM classified')
@@ -202,6 +234,7 @@ class ArticleForm(Form):
     
 #Adding articles    
 @app.route('/add_article',methods=['POST','GET'])
+@is_logged_in
 def add_article():
     form=ArticleForm(request.form)
     if request.method=='POST' and form.validate():
@@ -235,7 +268,7 @@ def add_article():
 
 #Articles fetch page    
 @app.route('/articles')
-# @is_logged_in
+@is_logged_in
 def articles():
     cur=mydb.cursor()
     #Get Articles
@@ -256,6 +289,7 @@ def articles():
 
 #Editing articles    
 @app.route('/edit_article/<string:id>',methods=['POST','GET'])
+@is_logged_in
 def edit_article(id):
     
     #Create Cursor
@@ -273,8 +307,8 @@ def edit_article(id):
     form=ArticleForm(request.form)
     
     #Populate the article
-    form.title.data = article[1]
-    form.body.data = article[2]
+    form.title.data = article['title']
+    form.body.data = article['body']
     
     if request.method=='POST' and form.validate():
         title=request.form['title']
@@ -298,7 +332,7 @@ def edit_article(id):
 
 #Fetching particular article
 @app.route('/article/<string:id>')
-# @is_logged_in
+@is_logged_in
 def article(id):
     cur = mydb.cursor()
     
@@ -315,6 +349,7 @@ def article(id):
 
 #Users dashboard
 @app.route('/dashboard')
+@is_logged_in
 def dashboard():
     #Create cursor
     
@@ -336,6 +371,7 @@ def dashboard():
 
 #Delete Article
 @app.route('/delete_article/<string:id>',methods=['POST'])
+@is_logged_in
 def delete_article(id):
     #Creating cursor
     cur = mydb.cursor()

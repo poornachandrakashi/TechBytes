@@ -1,5 +1,5 @@
 <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-    <a class="navbar-brand" href="/home">Gudigar's</a>
+    <a class="navbar-brand" href="/">Student's Forum</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -12,9 +12,9 @@
             <li class="nav-item">
                 <a class="nav-link" href="/articles">Articles</a>
             </li>
-            {% if session.logged_in %}
+            {% if session.usn %}
             <li class="nav-item">
-                <a class="nav-link" href="/fetch_profile">Users</a>
+                <a class="nav-link" href="/fetch_study">Study Materials</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="/dashboard">Dashboard</a>
